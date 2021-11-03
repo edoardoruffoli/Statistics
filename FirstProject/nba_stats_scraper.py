@@ -16,40 +16,70 @@ customHeaders = {
     'x-nba-stats-origin': 'stats',
     'x-nba-stats-token': 'true',
 }
+# Create a list of the seasons to look at
+seasons = ['2006-07', '2007-08', '2008-09', '2009-10', '2010-11', '2011-12', '2012-13', '2013-14', '2014-15',
+           '2015-16', '2016-17', '2017-18', '2018-19', '2019-20', '2020-21']
 
 # Scrapes stats.nba.com to get season average statistics using Selenium, creates Pandas dataframe from statistics, and concatenates each year's dataframe with the prior year
-def get_data():
+def get_data(season_list):
     time.sleep(1)
+    stats = pd.DataFrame()
 
-    # Get Teams Traditional Info
-    allTeamsTraditionalInfo = leaguedashteamstats.LeagueDashTeamStats(per_mode_detailed='PerGame',
-                                                           season='2020-21',
-                                                           measure_type_detailed_defense='Base',
-                                                           headers=customHeaders,
-                                                           timeout=120)
-    allTeamsTraditionalDict = allTeamsTraditionalInfo.get_normalized_dict()
-    allTeamsTraditionalList = allTeamsTraditionalDict['LeagueDashTeamStats']
+    for season in season_list:
+        # Get Teams Traditional Info
+        allTeamsTraditionalInfo = leaguedashteamstats.LeagueDashTeamStats(per_mode_detailed='PerGame',
+                                                               season=season,
+                                                               measure_type_detailed_defense='Base',
+                                                               headers=customHeaders,
+                                                               timeout=120)
+        allTeamsTraditionalDict = allTeamsTraditionalInfo.get_normalized_dict()
+        allTeamsTraditionalList = allTeamsTraditionalDict['LeagueDashTeamStats']
 
-    # Get Teams Advanced Info
-    allTeamsAdvancedInfo = leaguedashteamstats.LeagueDashTeamStats(per_mode_detailed='PerGame',
-                                                           season='2020-21',
-                                                           measure_type_detailed_defense='Advanced',
-                                                           headers=customHeaders,
-                                                           timeout=120)
-    allTeamsAdvancedDict = allTeamsAdvancedInfo.get_normalized_dict()
-    allTeamsAdvancedList = allTeamsAdvancedDict['LeagueDashTeamStats']
+        # Get Teams Advanced Info
+        allTeamsAdvancedInfo = leaguedashteamstats.LeagueDashTeamStats(per_mode_detailed='PerGame',
+                                                               season=season,
+                                                               measure_type_detailed_defense='Advanced',
+                                                               headers=customHeaders,
+                                                               timeout=120)
+        allTeamsAdvancedDict = allTeamsAdvancedInfo.get_normalized_dict()
+        allTeamsAdvancedList = allTeamsAdvancedDict['LeagueDashTeamStats']
 
-    # Merge the two lists of dicts (Traditional Info and Advanced Info)
-    d = defaultdict(dict)
-    for l in (allTeamsTraditionalList, allTeamsAdvancedList):
-        for elem in l:
-            d[elem['TEAM_ID']].update(elem)
-    result = d.values()
+        # Merge the two lists of dicts (Traditional Info and Advanced Info)
+        d = defaultdict(dict)
+        for l in (allTeamsTraditionalList, allTeamsAdvancedList):
+            for elem in l:
+                d[elem['TEAM_ID']].update(elem)
+        result = d.values()
 
-    return pd.DataFrame(result)
+        # Add the merged dict to the DataFrame
+        df = pd.DataFrame(result)
+
+        # Add season information
+        df.insert(0, 'SEASON', season)
+        stats = pd.concat([stats, df], ignore_index=True)
+
+    return stats
 
 
-statistics_df = get_data()
+df = get_data(seasons)
+
+# Find the columns that do not appear on the NBA official website
+indexes_to_drop = []
+i = 0
+for column in df.columns:
+    if "RANK" in column:
+        indexes_to_drop.append(i)
+
+    if column == "TEAM_ID" or column == "CFPARAMS" or column == "CFID" or column == "PACE_PER40":
+        indexes_to_drop.append(i)
+
+    if column.startswith("E_"):
+        indexes_to_drop.append(i)
+
+    i += 1
+
+# Drop the columns
+df.drop(df.columns[indexes_to_drop], axis=1, inplace=True)
 
 # Save dataframe in order to perform R analysis
-statistics_df.to_csv('nba_complete_team_statistics.csv', sep=";", index=False)
+df.to_csv('nba_complete_team_statistics.csv', sep=";", index=False)
