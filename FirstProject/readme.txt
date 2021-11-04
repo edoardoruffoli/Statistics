@@ -1,1 +1,0 @@
-Kosovo e Bosnia Erzegovina, Turchia, Svizzera e Lichetenstein non sono stati considerati perchè mancanti nella maggior parte delle tabelle

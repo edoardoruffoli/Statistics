@@ -16,11 +16,13 @@ customHeaders = {
     'x-nba-stats-origin': 'stats',
     'x-nba-stats-token': 'true',
 }
-# Create a list of the seasons to look at
+# Create a list of the seasons to analyze
 seasons = ['2006-07', '2007-08', '2008-09', '2009-10', '2010-11', '2011-12', '2012-13', '2013-14', '2014-15',
            '2015-16', '2016-17', '2017-18', '2018-19', '2019-20', '2020-21']
 
-# Scrapes stats.nba.com to get season average statistics using Selenium, creates Pandas dataframe from statistics, and concatenates each year's dataframe with the prior year
+
+# Scrapes stats.nba.com to get season average statistics using nba-api,
+# creates Pandas dataframe from statistics, and concatenates each year's dataframe with the prior year
 def get_data(season_list):
     time.sleep(1)
     stats = pd.DataFrame()
@@ -28,19 +30,19 @@ def get_data(season_list):
     for season in season_list:
         # Get Teams Traditional Info
         allTeamsTraditionalInfo = leaguedashteamstats.LeagueDashTeamStats(per_mode_detailed='PerGame',
-                                                               season=season,
-                                                               measure_type_detailed_defense='Base',
-                                                               headers=customHeaders,
-                                                               timeout=120)
+                                                                          season=season,
+                                                                          measure_type_detailed_defense='Base',
+                                                                          headers=customHeaders,
+                                                                          timeout=120)
         allTeamsTraditionalDict = allTeamsTraditionalInfo.get_normalized_dict()
         allTeamsTraditionalList = allTeamsTraditionalDict['LeagueDashTeamStats']
 
         # Get Teams Advanced Info
         allTeamsAdvancedInfo = leaguedashteamstats.LeagueDashTeamStats(per_mode_detailed='PerGame',
-                                                               season=season,
-                                                               measure_type_detailed_defense='Advanced',
-                                                               headers=customHeaders,
-                                                               timeout=120)
+                                                                       season=season,
+                                                                       measure_type_detailed_defense='Advanced',
+                                                                       headers=customHeaders,
+                                                                       timeout=120)
         allTeamsAdvancedDict = allTeamsAdvancedInfo.get_normalized_dict()
         allTeamsAdvancedList = allTeamsAdvancedDict['LeagueDashTeamStats']
 
@@ -56,6 +58,8 @@ def get_data(season_list):
 
         # Add season information
         df.insert(0, 'SEASON', season)
+
+        # Concat with previous years stats
         stats = pd.concat([stats, df], ignore_index=True)
 
     return stats
