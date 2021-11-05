@@ -55,7 +55,7 @@ corrplot.mixed(cor(data),
          tl.cex=0.70)
 
 #
-#   REGRESSIONE LINEARE
+#   MODELLO DI REGRESSIONE LINEARE
 #
 
 # costruzione e riduzione del modello di regressione lineare
@@ -103,48 +103,57 @@ ymin = min(r)
 ymax = max(r)
 r_squared <- expression(R^2)
 r_squared_adj <- expression(R^2 ~ Corretto)
-xl <- expression(R^2 ~ e ~ R^2 ~ Corretto ~ dei ~ 10 ~ Modelli ~ di ~ Regressione ~ Lineare)
+xl <- expression(R^2 ~ e ~ R^2 ~ Corretto ~ dei ~ 10 ~ Modelli ~ Ottenuti)
 plot(r[,1], pch = 19, type = "b", col = "red", ylim = c(ymin,ymax), xlab=xl, ylab = "")
 axis(1 , at = 0:9)
 lines(r[,2], pch = 19, type = "b", col = "blue")
 legend(x="topright", legend=c(r_squared, r_squared_adj), col=c("red", "blue"), lty=1:1, cex=0.7)
 
 
-# primo modello di regressione
-lm = lm.9
-summary(lm)
-
-# analisi dei residui 
-lm.r=residuals(lm)
-plot(fitted(lm),lm.r)
-par(mfrow=c(1, 2))
-hist(lm.r, 100, freq = FALSE)
-lines(sort(lm.r), dnorm(sort(lm.r), mean(lm.r), sd(lm.r)), col="red", lwd=2)
-qqnorm(lm.r)
-qqline(lm.r, col="red", lwd=2)
-skewness = mean(((lm.r - mean(lm.r)) / sd(lm.r))^3)
-skewness
-kurtosi = mean(((lm.r - mean(lm.r)) / sd(lm.r))^4) - 3
-kurtosi
-shapiro.test(lm.r)
-
-# secondo modello possibile
+# modello selezionato (miglior rapporto R^2/residui)
 lm = lm.6
 summary(lm)
 
-# analisi dei residui 
+# analisi dei residui: grafici
 lm.r=residuals(lm)
-plot(fitted(lm),lm.r)
+plot(fitted(lm),lm.r, pch=19)
 par(mfrow=c(1, 2))
 hist(lm.r, 100, freq = FALSE)
 lines(sort(lm.r), dnorm(sort(lm.r), mean(lm.r), sd(lm.r)), col="red", lwd=2)
 qqnorm(lm.r)
 qqline(lm.r, col="red", lwd=2)
+mtext("Grafici dei residui prima della rimozione degli outliers", side = 3, line = -1, outer = TRUE, lwd=2)
+
+# analisi dei residui: indicatori
 skewness = mean(((lm.r - mean(lm.r)) / sd(lm.r))^3)
 skewness
 kurtosi = mean(((lm.r - mean(lm.r)) / sd(lm.r))^4) - 3
 kurtosi
 shapiro.test(lm.r)
 
+# analisi dei residui: rimozione outliers
+r_outliers <- boxplot(lm.r, plot=FALSE)$out
+r_outliers <- rev(sort(r_outliers))
+r_outliers
+lm.r<-lm.r[-which(lm.r %in% r_outliers[1:length(r_outliers)])]
 
+# analisi dei residui: verifica miglioramento grafici dopo la 
+# rimozione degli outliers
+par(mfrow=c(1, 2))
+hist(lm.r, 100, freq = FALSE)
+lines(sort(lm.r), dnorm(sort(lm.r), mean(lm.r), sd(lm.r)), col="red", lwd=2)
+qqnorm(lm.r)
+qqline(lm.r, col="red", lwd=2)
+mtext("Grafici dei residui dopo la rimozione degli outliers", side = 3, line = -1, outer = TRUE, lwd=2)
 
+# analisi dei residui: verifica miglioramento indicatori generali dopo la 
+# rimozione degli outliers
+skewness = mean(((lm.r - mean(lm.r)) / sd(lm.r))^3)
+skewness
+kurtosi = mean(((lm.r - mean(lm.r)) / sd(lm.r))^4) - 3
+kurtosi
+shapiro.test(lm.r)
+
+#
+#   MODELLO DI REGRESSIONE NON LINEARE (LOGARITMICO)
+#
