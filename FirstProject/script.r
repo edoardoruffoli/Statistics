@@ -9,6 +9,15 @@ library(scatterplot3d)
 # caricamento dei dati dal file csv
 data = read.csv('nba_complete_team_statistics.csv', header = TRUE, sep = ";")
 
+# rimozione osservazioni con meno di 82 partite
+a = c()
+for (i in 1:length(data[,1])) {
+  if (data$GP[i] != 82) {
+    a=c(a,i)
+  }
+}
+data = data[-a,]
+
 # rimozione colonne non selezionate 
 data$SEASON <- NULL
 data$TEAM_NAME <- NULL
@@ -65,95 +74,228 @@ lm.1=lm(W~., data=data)
 summary(lm.1)
 r[1,]= c(summary(lm.1)$r.squared, summary(lm.1)$adj.r.squared)
 
-lm.2=lm(W~.-FTA, data=data)
+lm.2=lm(W~.-FG3A, data=data)
 summary(lm.2)
 r[2,]= c(summary(lm.2)$r.squared, summary(lm.2)$adj.r.squared)
 
-lm.3=lm(W~.-FTA-STL, data=data)
+lm.3=lm(W~.-FG3A-BLK, data=data)
 summary(lm.3)
 r[3,]= c(summary(lm.3)$r.squared, summary(lm.3)$adj.r.squared)
 
-lm.4=lm(W~.-FTA-STL-BLK, data=data)
+lm.4=lm(W~.-FG3A-BLK-PTS, data=data)
 summary(lm.4)
 r[4,]= c(summary(lm.4)$r.squared, summary(lm.4)$adj.r.squared)
 
-lm.5=lm(W~.-FTA-STL-BLK-AST, data=data)
+lm.5=lm(W~.-FG3A-BLK-PTS-FTA, data=data)
 summary(lm.5)
 r[5,]= c(summary(lm.5)$r.squared, summary(lm.5)$adj.r.squared)
 
-lm.6=lm(W~.-FTA-STL-BLK-AST-REB, data=data)
+lm.6=lm(W~.-FG3A-BLK-PTS-FTA-STL, data=data)
 summary(lm.6)
 r[6,]= c(summary(lm.6)$r.squared, summary(lm.6)$adj.r.squared)
 
-# tutti i p-value sono bassi, continuo comunque a ridurre
-lm.7=lm(W~.-FTA-STL-BLK-AST-REB-FG3A, data=data)
+lm.7=lm(W~.-FG3A-BLK-PTS-FTA-STL-REB, data=data)
 summary(lm.7)
 r[7,]= c(summary(lm.7)$r.squared, summary(lm.7)$adj.r.squared)
 
-lm.8=lm(W~.-FTA-STL-BLK-AST-REB-FG3A-PTS, data=data)
+lm.8=lm(W~.-FG3A-BLK-PTS-FTA-STL-REB-TOV, data=data)
 summary(lm.8)
 r[8,]= c(summary(lm.8)$r.squared, summary(lm.8)$adj.r.squared)
 
-lm.9=lm(W~.-FTA-STL-BLK-AST-REB-FG3A-PTS-TOV, data=data)
+lm.9=lm(W~.-FG3A-BLK-PTS-FTA-STL-REB-TOV-AST, data=data)
 summary(lm.9)
 r[9,]= c(summary(lm.9)$r.squared, summary(lm.9)$adj.r.squared)
 
 # esaminiamo i valori degli R^2 e R^2 corretti
 ymin = min(r)
 ymax = max(r)
-r_squared <- expression(R^2)
-r_squared_adj <- expression(R^2 ~ Corretto)
-xl <- expression(R^2 ~ e ~ R^2 ~ Corretto ~ dei ~ 10 ~ Modelli ~ Ottenuti)
-plot(r[,1], pch = 19, type = "b", col = "red", ylim = c(ymin,ymax), xlab=xl, ylab = "")
+plot(r[,1], pch = 19, type = "b", col = "red", ylim = c(ymin,ymax+0.0005), 
+     xlab=expression(R^2~e~R^2~Corretto~dei~9~Modelli~Ottenuti), 
+     ylab = "")
 axis(1 , at = 0:9)
 lines(r[,2], pch = 19, type = "b", col = "blue")
-legend(x="topright", legend=c(r_squared, r_squared_adj), col=c("red", "blue"), lty=1:1, cex=0.7)
+legend("topright", inset = c(-0.10, 0),
+       legend=c(expression(R^2), expression(R^2~Corretto)), 
+       col=c("red", "blue"), lty=1:1, cex=0.9, bty="n")
 
-
-# modello selezionato (miglior rapporto R^2/residui)
-lm = lm.6
+# modello selezionato (miglior rapporto R^2/p-values)
+lm = lm.7
 summary(lm)
 
 # analisi dei residui: grafici
 lm.r=residuals(lm)
 plot(fitted(lm),lm.r, pch=19)
 par(mfrow=c(1, 2))
-hist(lm.r, 100, freq = FALSE)
+hist(lm.r, 20, freq = FALSE, main="Istogramma dei Residui",
+     ylab="Densità",xlab="Residui")
+lines(density(lm.r), col = "blue")
 lines(sort(lm.r), dnorm(sort(lm.r), mean(lm.r), sd(lm.r)), col="red", lwd=2)
 qqnorm(lm.r)
 qqline(lm.r, col="red", lwd=2)
-mtext("Grafici dei residui prima della rimozione degli outliers", side = 3, line = -1, outer = TRUE, lwd=2)
 
 # analisi dei residui: indicatori
-skewness = mean(((lm.r - mean(lm.r)) / sd(lm.r))^3)
+skewness=mean(((lm.r-mean(lm.r))/sd(lm.r))^3)
 skewness
-kurtosi = mean(((lm.r - mean(lm.r)) / sd(lm.r))^4) - 3
-kurtosi
-shapiro.test(lm.r)
-
-# analisi dei residui: rimozione outliers
-r_outliers <- boxplot(lm.r, plot=FALSE)$out
-r_outliers <- rev(sort(r_outliers))
-r_outliers
-lm.r<-lm.r[-which(lm.r %in% r_outliers[1:length(r_outliers)])]
-
-# analisi dei residui: verifica miglioramento grafici dopo la 
-# rimozione degli outliers
-par(mfrow=c(1, 2))
-hist(lm.r, 100, freq = FALSE)
-lines(sort(lm.r), dnorm(sort(lm.r), mean(lm.r), sd(lm.r)), col="red", lwd=2)
-qqnorm(lm.r)
-qqline(lm.r, col="red", lwd=2)
-mtext("Grafici dei residui dopo la rimozione degli outliers", side = 3, line = -1, outer = TRUE, lwd=2)
-
-# analisi dei residui: verifica miglioramento indicatori generali dopo la 
-# rimozione degli outliers
-skewness = mean(((lm.r - mean(lm.r)) / sd(lm.r))^3)
-skewness
-kurtosi = mean(((lm.r - mean(lm.r)) / sd(lm.r))^4) - 3
+kurtosi=mean(((lm.r-mean(lm.r))/sd(lm.r))^4)-3
 kurtosi
 shapiro.test(lm.r)
 
 #
 #   MODELLO DI REGRESSIONE NON LINEARE (LOGARITMICO)
 #
+
+# costruzione e riduzione del modello di regressione logaritmico
+r = matrix(ncol = 2, nrow = 9)
+ldata=log(data)
+
+lm.log.1=lm(W~., data=ldata)
+summary(lm.log.1)
+r[1,]= c(summary(lm.log.1)$r.squared, summary(lm.log.1)$adj.r.squared)
+
+lm.log.2=lm(W~.-FG3A, data=ldata)
+summary(lm.log.2)
+r[2,]= c(summary(lm.log.2)$r.squared, summary(lm.log.2)$adj.r.squared)
+
+lm.log.3=lm(W~.-FG3A-FTA, data=ldata)
+summary(lm.log.3)
+r[3,]= c(summary(lm.log.3)$r.squared, summary(lm.log.3)$adj.r.squared)
+
+lm.log.4=lm(W~.-FG3A-FTA-PTS, data=ldata)
+summary(lm.log.4)
+r[4,]= c(summary(lm.log.4)$r.squared, summary(lm.log.4)$adj.r.squared)
+
+lm.log.5=lm(W~.-FG3A-FTA-PTS-BLK, data=ldata)
+summary(lm.log.5)
+r[5,]= c(summary(lm.log.5)$r.squared, summary(lm.log.5)$adj.r.squared)
+
+lm.log.6=lm(W~.-FG3A-FTA-PTS-BLK-STL, data=ldata)
+summary(lm.log.6)
+r[6,]= c(summary(lm.log.6)$r.squared, summary(lm.log.6)$adj.r.squared)
+
+lm.log.7=lm(W~.-FG3A-FTA-PTS-BLK-STL-REB, data=ldata)
+summary(lm.log.7)
+r[7,]= c(summary(lm.log.7)$r.squared, summary(lm.log.7)$adj.r.squared)
+
+# tutti i p-value sono bassi, continuo comunque a ridurre
+lm.log.8=lm(W~.-FG3A-FTA-PTS-BLK-STL-REB-AST, data=ldata)
+summary(lm.log.8)
+r[8,]= c(summary(lm.log.8)$r.squared, summary(lm.log.8)$adj.r.squared)
+
+lm.log.9=lm(W~.-FG3A-FTA-PTS-BLK-STL-REB-AST-FGA, data=ldata)
+summary(lm.log.9)
+r[9,]= c(summary(lm.log.9)$r.squared, summary(lm.log.9)$adj.r.squared)
+
+# esaminiamo i valori degli R^2 e R^2 corretti
+ymin = min(r)
+ymax = max(r)
+par(mfrow=c(1,1))
+plot(r[,1], pch=19, type="b", col="red", ylim=c(ymin,ymax), 
+     xlab=expression(R^2~e~R^2~Corretto~dei~10~Modelli~Ottenuti), 
+     ylab = "")
+axis(1 , at = 0:9)
+lines(r[,2], pch = 19, type = "b", col = "blue")
+legend(x="topright", legend=c(expression(R^2), expression(R^2~Corretto)), 
+       col=c("red", "blue"), lty=1:1, cex=0.7)
+
+# modello selezionato (migliori p-value/R^2)
+lm.log=lm.log.9
+summary(lm.log)
+
+# analisi dei residui: grafici
+lm.log.r=residuals(lm.log)
+plot(fitted(lm.log),lm.log.r, pch=19)
+par(mfrow=c(1, 2))
+hist(lm.log.r, 30, freq = FALSE, main="Istogramma dei Residui",
+     ylab="Densità",xlab="Residui")
+lines(density(lm.log.r), col = "blue")
+lines(sort(lm.log.r), dnorm(sort(lm.log.r), mean(lm.log.r), sd(lm.log.r)), 
+      col="red", lwd=2)
+qqnorm(lm.log.r)
+qqline(lm.log.r, col="red", lwd=2)
+
+# analisi dei residui: indicatori
+skewness=mean(((lm.log.r-mean(lm.log.r))/sd(lm.log.r))^3)
+skewness
+kurtosi=mean(((lm.log.r-mean(lm.log.r))/sd(lm.log.r))^4)-3
+kurtosi
+shapiro.test(lm.log.r)
+
+#
+#   PREVISIONE E AUTOVALUTAZIONE DEI MODELLI
+#
+
+# logaritmi dei dati originali
+ldata = log(data)
+
+# cross validation
+n = 50
+err_lin = rep(0,n)
+err_log = rep(0,n)
+for(i in 1:n){
+  testset = sort(sample(450, 45))
+  data_train = data[-testset,]
+  data_test = data[testset,]
+  ldata_train = ldata[-testset,]
+  ldata_test = ldata[testset,]
+  
+  # costruzione modelli lineare e modello logaritmico con i training set
+  data_train.lm = lm(W~.-FG3A-BLK-PTS-FTA-STL-REB, data = data_train)
+  ldata_train.lm = lm(W~.-FG3A-FTA-PTS-BLK-STL-REB-AST-FGA , data = ldata_train)
+  
+  # calcoliamo l’errore per i due modelli
+  data_train.lm.p = predict(data_train.lm, data_test)
+  ldata_train.lm.p = predict(ldata_train.lm, ldata_test)
+  
+  # salviamo lo scarto quadratico medio per entrambi i modelli
+  err_lin[i] = sqrt(mean((data_train.lm.p - data_test$W)^2))
+  err_log[i] = sqrt(mean((exp(ldata_train.lm.p) - data_test$W)^2))
+}
+
+# stampa media errori registrati nella simulazione
+mean(err_lin)
+mean(err_log)
+
+# stampa deviazione standard errori registrati nella simulazione
+sd(err_lin)
+sd(err_log)
+
+# rappresentazione grafica errori dei due modelli
+par(mfrow=c(1,1))
+gmin = min(err_lin, err_log)
+gmax = max(err_lin, err_log)
+plot(err_lin, type="b", pch=20, col="blue", ylim=c(gmin, gmax+1),
+     ylab="Errore", xlab="Indice")
+points(err_log, type="b", pch=20, col="red")
+legend("topright",
+       c("Lineare",
+         "Logaritmico"),
+       col = c("blue", "red"),
+       pch = c(19,19),
+       cex=0.7)
+
+#Margini di Previsione Modello Lineare
+
+# set.seed(343)
+samples = sample(450, 10)
+train_set = data[-samples,]
+test_set = data[samples,]
+
+lm=lm.final
+lm.p=predict(lm, data=test_set)
+t(test_set$W)
+
+lm.ci=predict(lm, test_set, interval = "confidence")
+lm.pi=predict(lm, test_set, interval = "prediction")
+
+plot(
+  test_set$W, pch=19, col="red", xlim=c(1,10),
+  ylim = c(min(lm.pi[, 2]), max(lm.pi[, 3])),
+  ylab = "Vittorie",
+  xlab = "Indice"
+)
+
+x = 1:10
+points(x-0.05, lm.ci[,1], pch=20, col="blue")
+segments(x-0.05, lm.ci[,2], x-0.05, lm.ci[,3], col="blue")
+points(x+0.05, lm.pi[,1], pch=19, col="green3")
+segments(x+0.05, lm.pi[,2], x+0.05, lm.pi[,3], col="green3")
