@@ -7,7 +7,7 @@ library(scatterplot3d)
 #
 
 # caricamento dei dati dal file csv
-data = read.csv('nba_complete_team_statistics.csv', header = TRUE, sep = ";")
+data = read.csv('tabella.csv', header = TRUE, sep = ";")
 
 # rimozione osservazioni con meno di 82 partite
 a = c()
@@ -54,6 +54,14 @@ data$PIE <- NULL
 # dati utilizzati per l'analisi
 summary(data)
 str(data)
+plot(data)
+
+# standardizzazione tabella
+st_data = data.frame(scale(data))
+
+# la standardizzazione non varia il grafico di dispersione
+# e non è stata quindi considerata nel seguito dell'analisi
+plot(st_data)
 
 # grafico correlazioni
 corrplot.mixed(cor(data), 
@@ -125,6 +133,7 @@ summary(lm)
 # analisi dei residui: grafici
 lm.r=residuals(lm)
 plot(fitted(lm),lm.r, pch=19)
+plot(lm, which=1, lwd=2)
 par(mfrow=c(1, 2))
 hist(lm.r, 20, freq = FALSE, main="Istogramma dei Residui",
      ylab="Densità",xlab="Residui")
@@ -189,13 +198,14 @@ r[9,]= c(summary(lm.log.9)$r.squared, summary(lm.log.9)$adj.r.squared)
 ymin = min(r)
 ymax = max(r)
 par(mfrow=c(1,1))
-plot(r[,1], pch=19, type="b", col="red", ylim=c(ymin,ymax), 
+plot(r[,1], pch=19, type="b", col="red", ylim=c(ymin,ymax+0.0005), 
      xlab=expression(R^2~e~R^2~Corretto~dei~10~Modelli~Ottenuti), 
      ylab = "")
 axis(1 , at = 0:9)
 lines(r[,2], pch = 19, type = "b", col = "blue")
-legend(x="topright", legend=c(expression(R^2), expression(R^2~Corretto)), 
-       col=c("red", "blue"), lty=1:1, cex=0.7)
+legend("topright", inset = c(-0.10, 0),
+       legend=c(expression(R^2), expression(R^2~Corretto)), 
+       col=c("red", "blue"), lty=1:1, cex=0.9, bty="n")
 
 # modello selezionato (migliori p-value/R^2)
 lm.log=lm.log.9
@@ -204,6 +214,7 @@ summary(lm.log)
 # analisi dei residui: grafici
 lm.log.r=residuals(lm.log)
 plot(fitted(lm.log),lm.log.r, pch=19)
+plot(lm.log, which=1, lwd=2)
 par(mfrow=c(1, 2))
 hist(lm.log.r, 30, freq = FALSE, main="Istogramma dei Residui",
      ylab="Densità",xlab="Residui")
@@ -220,6 +231,35 @@ kurtosi=mean(((lm.log.r-mean(lm.log.r))/sd(lm.log.r))^4)-3
 kurtosi
 shapiro.test(lm.log.r)
 
+# valutazione dei residui del modello di regressione non ridotto
+lm.log.1.r = residuals(lm.log.1)
+shapiro.test(lm.log.1.r)
+
+# rimozione dei residui outliers
+boxplot(lm.log.r, main="Boxplot residui prima della rimozione degli outliers", outcol="red")
+r_outliers <- boxplot(lm.log.r, plot=FALSE)$out
+r_outliers <- rev(sort(r_outliers))
+r_outliers
+lm.log.r<-lm.log.r[-which(lm.log.r %in% r_outliers[1:length(r_outliers)])]
+boxplot(lm.log.r, main="Boxplot residui dopo la rimozione degli outliers", outcol="red")
+
+# grafici post rimozione outliers
+par(mfrow=c(1, 2))
+hist(lm.log.r, 30, freq = FALSE, main="Istogramma dei Residui",
+     ylab="Densità",xlab="Residui")
+lines(density(lm.log.r), col = "blue")
+lines(sort(lm.log.r), dnorm(sort(lm.log.r), mean(lm.log.r), sd(lm.log.r)), 
+      col="red", lwd=2)
+qqnorm(lm.log.r)
+qqline(lm.log.r, col="red", lwd=2)
+
+# indicatori post rimozione outliers
+skewness=mean(((lm.log.r-mean(lm.log.r))/sd(lm.log.r))^3)
+skewness
+kurtosi=mean(((lm.log.r-mean(lm.log.r))/sd(lm.log.r))^4)-3
+kurtosi
+shapiro.test(lm.log.r)
+
 #
 #   PREVISIONE E AUTOVALUTAZIONE DEI MODELLI
 #
@@ -227,12 +267,14 @@ shapiro.test(lm.log.r)
 # logaritmi dei dati originali
 ldata = log(data)
 
-# cross validation
+set.seed(303)
+
+# validazione modelli
 n = 50
 err_lin = rep(0,n)
 err_log = rep(0,n)
 for(i in 1:n){
-  testset = sort(sample(450, 45))
+  testset = sort(sample(534, 50))
   data_train = data[-testset,]
   data_test = data[testset,]
   ldata_train = ldata[-testset,]
@@ -251,11 +293,11 @@ for(i in 1:n){
   err_log[i] = sqrt(mean((exp(ldata_train.lm.p) - data_test$W)^2))
 }
 
-# stampa media errori registrati nella simulazione
+# media errori
 mean(err_lin)
 mean(err_log)
 
-# stampa deviazione standard errori registrati nella simulazione
+# deviazione standard errori
 sd(err_lin)
 sd(err_log)
 
@@ -266,36 +308,5 @@ gmax = max(err_lin, err_log)
 plot(err_lin, type="b", pch=20, col="blue", ylim=c(gmin, gmax+1),
      ylab="Errore", xlab="Indice")
 points(err_log, type="b", pch=20, col="red")
-legend("topright",
-       c("Lineare",
-         "Logaritmico"),
-       col = c("blue", "red"),
-       pch = c(19,19),
-       cex=0.7)
-
-#Margini di Previsione Modello Lineare
-
-# set.seed(343)
-samples = sample(450, 10)
-train_set = data[-samples,]
-test_set = data[samples,]
-
-lm=lm.final
-lm.p=predict(lm, data=test_set)
-t(test_set$W)
-
-lm.ci=predict(lm, test_set, interval = "confidence")
-lm.pi=predict(lm, test_set, interval = "prediction")
-
-plot(
-  test_set$W, pch=19, col="red", xlim=c(1,10),
-  ylim = c(min(lm.pi[, 2]), max(lm.pi[, 3])),
-  ylab = "Vittorie",
-  xlab = "Indice"
-)
-
-x = 1:10
-points(x-0.05, lm.ci[,1], pch=20, col="blue")
-segments(x-0.05, lm.ci[,2], x-0.05, lm.ci[,3], col="blue")
-points(x+0.05, lm.pi[,1], pch=19, col="green3")
-segments(x+0.05, lm.pi[,2], x+0.05, lm.pi[,3], col="green3")
+legend("topright", inset = c(-0.10, 0), c("Lineare", "Logaritmico"),
+       col = c("blue", "red"), pch = c(19,19), cex=0.7, bty="n")

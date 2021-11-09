@@ -86,4 +86,4 @@ for column in df.columns:
 df.drop(df.columns[indexes_to_drop], axis=1, inplace=True)
 
 # Save dataframe in order to perform R analysis
-df.to_csv('nba_complete_team_statistics.csv', sep=";", index=False)
+df.to_csv('tabella.csv', sep=";", index=False)
