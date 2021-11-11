@@ -1,6 +1,5 @@
 # librerie
 library(corrplot)
-library(scatterplot3d)
 
 #
 #   DATA PREPROCESSING
@@ -261,7 +260,7 @@ kurtosi
 shapiro.test(lm.log.r)
 
 #
-#   PREVISIONE E AUTOVALUTAZIONE DEI MODELLI
+#   AUTOVALUTAZIONE E PREVISIONE DEI MODELLI
 #
 
 # logaritmi dei dati originali
@@ -306,7 +305,38 @@ par(mfrow=c(1,1))
 gmin = min(err_lin, err_log)
 gmax = max(err_lin, err_log)
 plot(err_lin, type="b", pch=20, col="blue", ylim=c(gmin, gmax+1),
-     ylab="Errore", xlab="Indice")
+     ylab="Errore", xlab="Iterazione")
 points(err_log, type="b", pch=20, col="red")
 legend("topright", inset = c(-0.10, 0), c("Lineare", "Logaritmico"),
        col = c("blue", "red"), pch = c(19,19), cex=0.7, bty="n")
+
+
+# previsione modello lineare
+set.seed(303)
+testset = sort(sample(534, 50))
+data_train = data[-testset,]
+data_test = data[testset,]
+
+data_train.lm = lm(W~.-FG3A-BLK-PTS-FTA-STL-REB, data = data_train)
+data_train.lm.p = predict(data_train.lm, data_test)
+data_test$W
+sqrt(mean(data_train.lm.p-data_test$W)^2)
+
+data_train.lm.ci = predict(data_train.lm, data_test, interval="confidence")
+data_train.lm.pi = predict(data_train.lm, data_test, interval="prediction")
+
+plot(
+  data_test$W, pch=19, col="red",
+  ylim = c(min(data_train.lm.pi[, 2]), max(data_train.lm.pi[, 3])),
+  ylab = "Vittorie",
+  xlab = "Indice"
+)
+
+x = 1:50
+
+points(x-0.05, data_train.lm.ci[,1], pch=19, col="blue")
+segments(x-0.05, data_train.lm.ci[,2], x-0.05,data_train.lm.ci[,3], col="blue")
+
+points(x+0.05, data_train.lm.pi[,1], pch=19, col="green3")
+segments(x+0.05, data_train.lm.pi[,2], x+0.05, data_train.lm.pi[,3], col="green3")
+
