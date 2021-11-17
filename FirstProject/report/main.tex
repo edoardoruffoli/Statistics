@@ -49,8 +49,8 @@
 \subsection{Scopo dell'analisi}
 L'obiettivo dell'analisi è quello di costruire un modello di regressione lineare in grado di prevedere il numero di vittorie che una squadra NBA riuscirà a totalizzare al termine di una stagione date le attuali statistiche per partita della squadra stessa. 
 
-Un modello simile trova applicazione, principalmente, nei seguenti contesti: i bookmakers e gli analisti sportivi possono farne uso per il calcolo delle quote sportive; può risultare estremamente utile anche agli allenatori delle squadre stesse per migliorare gli aspetti dello stile di gioco in modo da vincere un numero maggiore di partite.
-Si può ipotizzare quindi che l'analisi sia stata commissionata da una società di scommesse sportive oppure dalla dirigenza di una franchigia NBA.
+Un modello simile trova applicazione, principalmente, nei seguenti contesti: i bookmakers e gli analisti sportivi possono farne uso per il calcolo delle quote sportive; può risultare estremamente utile anche agli allenatori delle squadre stesse per migliorare gli aspetti dello stile di gioco che influenzano maggiormente il numero di vittorie.
+Si può ipotizzare, quindi, che l'analisi sia stata commissionata da una società di scommesse sportive oppure dalla dirigenza di una franchigia NBA.
 
 \section{Dataset}
 L'analisi è stata svolta facendo uso delle tabelle \emph{Teams General Traditional} e \emph{Teams General Advanced} reperibili sul sito ufficiale NBA che contengono le statistiche stagionali di ogni squadra:
@@ -74,7 +74,7 @@ La tabella contiene 42 colonne e 626 osservazioni. Ai fini dell'analisi sono sta
     \item \textbf{TOV}: numero di palle perse per partita (decimale positivo).
     \item \textbf{STL}: numero di palle recuperate per partita (decimale positivo).
     \item \textbf{BLK}: numero di stoppate a partita (decimale positivo).
-    \item \textbf{PTS}: numero di punti a partita (decimale positivo).
+    \item \textbf{PTS}: numero di punti segnati a partita (decimale positivo).
     \item \textbf{OFF\_RATING}: numero di punti segnati da una squadra per 100 possessi di gioco (decimale positivo).
     \item \textbf{DEF\_RATING}: numero di punti subiti da una squadra per 100 possessi di gioco (decimale positivo).
 \end{itemize}
@@ -93,11 +93,11 @@ Inoltre non sono stati considerati tutti i fattori di ingresso espressi in valor
 \subsection{Considerazioni preliminari}
 \begin{minipage}{0.5\textwidth} 
     \hspace{-1.30cm}
-    \includegraphics[scale=.5]{imgs/correlation_plot.png}
+    \includegraphics[scale=.52]{imgs/correlation_plot.png}
 \end{minipage}
 \begin{minipage}{0.5\textwidth} 
-    Come è possibile osservare dal grafico riassuntivo delle correlazioni, le vittorie risultano essere nettamente correlate ($+-$ 0.6) con i due indicatori avanzati OFF\_RATING e DEF\_RATING; correlato positivamente con l'OFF\_RATING e negativamente con il DEF\_RATING. Ciò è dovuto alla natura opposta delle due statistiche: vincerà un numero maggiore di partite la squadra che totalizzerà un grande numero di punti, OFF\_RATING elevato, e ne subirà il meno possibile, DEF\_RATING ridotto.
-    Le palle perse, gli assist e i punti hanno invece delle correlazioni più lievi (circa |0.35|). Non vi sono ulteriori correlazioni significative.
+    Come è possibile osservare dal grafico riassuntivo delle correlazioni, le vittorie risultano essere nettamente correlate ($|0.6|$) con i due indicatori avanzati OFF\_RATING e DEF\_RATING; correlato positivamente con l'OFF\_RATING e negativamente con il DEF\_RATING. Ciò è dovuto alla natura opposta delle due statistiche: vincerà un numero maggiore di partite la squadra che totalizzerà un grande numero di punti, OFF\_RATING elevato, e ne subirà il meno possibile, DEF\_RATING ridotto.
+    Le palle perse, gli assist e i punti hanno invece delle correlazioni più lievi (circa $|0.35|$). Non vi sono ulteriori correlazioni significative.
 \end{minipage}
 
 \section{Analisi}
@@ -180,7 +180,7 @@ Osservando il grafico di dispersione dei valori residui e dei valori stimati, si
 
 Andando a verificare la normalità dei residui, il test di Shapiro Wilk restituisce un p-value decisamente superiore ai livelli di significatività a cui di solito si fa riferimento (alpha=0.05): ciò impedisce di rigettare l'ipotesi nulla ovvero la normalità della distribuzione.
 
-L'analisi dei residui è stata decisamente positiva, anche perché effettuata su un numero sufficientemente elevato di osservazioni. Abbiamo la conferma che il modello abbia catturato l'essenza del problema dato che gli errori sembrano dovuti esclusivamente al caso.
+L'analisi dei residui è stata decisamente positiva, anche perché effettuata su un numero sufficientemente elevato di osservazioni. Abbiamo la conferma che il modello abbia catturato l'essenza del problema dato che gli errori sembrano essere dovuti esclusivamente al caso.
 
 \subsection{Modello di Regressione Non Lineare}
 Il modello di regressione lineare ha dato ottimi risultati, tuttavia è stato ritenuto necessario andare a verificare se un modello di regressione logaritmico potesse fornire previsioni migliori, magari riuscendo a catturare componenti non lineari del problema. 
@@ -229,7 +229,7 @@ Rispetto al modello lineare, la proporzione di varianza spiegata e varianza spie
     \end{figure}
 \vspace{-0.4cm}
 
-Il grafico di dispersione dei valori residui e dei valori stimati evidenzia una relazione particolare tra i residui: la presenza di un pattern evidente nella distribuzione dei residui suggerisce che il modello logaritmico potrebbe non essere il più adeguato all'analisi del fenomeno.
+Il grafico di dispersione dei valori residui e dei valori stimati evidenzia una relazione particolare tra i residui: la presenza di un pattern evidente nella distribuzione dei residui suggerisce che il modello logaritmico possa non essere il più adeguato all'analisi del fenomeno.
 
 Nonostante la forte similitudine con il grafico di una distribuzione normale, il test di Shapiro Wilk ha un p-value molto ridotto che costringe a rifiutare l'ipotesi nulla di normalità dei residui.
 
@@ -375,11 +375,11 @@ Osservando i grafici riguardanti il modello di regressione non lineare, che sull
 \begin{itemize}
     \item il grafico di dispersione dei valori residui e dei valori stimati presenta un pattern ben definito che indica che l'errore nelle previsioni non sia esclusivamente dovuto al caso ma che sia presente anche una componente dovuta alla natura del modello stesso.
     \item nell'analisi dei residui effettuata, è emerso come gli outliers abbiano un'incidenza negativa decisamente più marcata rispetto al modello lineare. 
-    Le previsioni del modello non lineare riguardanti questi dati hanno un errore decisamente maggiore rispetto a quelle del modello lineare.
+    Le previsioni del modello non lineare riguardanti questi dati presentano un errore decisamente maggiore rispetto a quelle del modello lineare.
     \item i risultati ottenuti dalla validazione son sempre nettamente inferiori rispetto a quelli del modello lineare.
 \end{itemize}
 
-Inoltre, un'altra conclusione interessante può essere ricava dalla composizione dei modelli ridotti: è infatti possibile riconoscere quali siano le statistiche che svolgono un ruolo più importante nel decidere quante partite vincerà una squadra. I parametri avanzati selezionati per l'analisi, ovvero OFF\_RATING e DEF\_RATING, e le palle perse (TOV), sono presenti in entrambi i modelli ottenuti.
+Inoltre, un'altra conclusione interessante può essere ricavata dalla composizione dei modelli ridotti: è infatti possibile riconoscere quali siano le statistiche che svolgono un ruolo più importante nel decidere quante partite vincerà una squadra. I parametri avanzati selezionati per l'analisi, ovvero OFF\_RATING e DEF\_RATING, ma anche le palle perse (TOV), sono presenti in entrambi i modelli ottenuti.
 
 \newpage
 \appendix

@@ -1,5 +1,5 @@
 import pandas as pd
-from nba_api.stats.endpoints import leaguedashteamstats
+from nba_api.stats.endpoints import leaguedashteamstats, leaguestandings
 from collections import defaultdict
 import time
 
@@ -46,13 +46,30 @@ def get_data(season_list):
         allTeamsAdvancedDict = allTeamsAdvancedInfo.get_normalized_dict()
         allTeamsAdvancedList = allTeamsAdvancedDict['LeagueDashTeamStats']
 
+        # Get Teams Playoff Info
+        allTeamsLeagueStandingsInfo = leaguestandings.LeagueStandings(season=season,
+                                                                      season_type="Regular Season")
+        allTeamsLeagueStandingsDict = allTeamsLeagueStandingsInfo.get_normalized_dict()
+        allTeamsLeagueStandingsList = allTeamsLeagueStandingsDict['Standings']
+
+        # Delete all the unused keys and change name of TEAM_ID key
+        for l in allTeamsLeagueStandingsList:
+            team_id = l['TeamID']
+            playoff_rank = l['PlayoffRank']
+            l.clear()
+            l['TEAM_ID'] = team_id
+
+            # 1 for teams that qualified for the playoff, 0 otherwise
+            l['PLAYOFF'] = 1 if playoff_rank <= 8 else 0
+
         # Merge the two lists of dicts (Traditional Info and Advanced Info)
         d = defaultdict(dict)
-        for l in (allTeamsTraditionalList, allTeamsAdvancedList):
+        for l in (allTeamsTraditionalList, allTeamsAdvancedList, allTeamsLeagueStandingsList):
             for elem in l:
                 d[elem['TEAM_ID']].update(elem)
-        result = d.values()
 
+        result = d.values()
+        print("CACCA")
         # Add the merged dict to the DataFrame
         df = pd.DataFrame(result)
 
@@ -66,7 +83,6 @@ def get_data(season_list):
 
 
 df = get_data(seasons)
-print(df)
 
 # Find the columns that do not appear on the NBA official website
 indexes_to_drop = []
