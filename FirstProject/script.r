@@ -283,11 +283,11 @@ for(i in 1:n){
   data_train.lm = lm(W~.-FG3A-BLK-PTS-FTA-STL-REB, data = data_train)
   ldata_train.lm = lm(W~.-FG3A-FTA-PTS-BLK-STL-REB-AST-FGA , data = ldata_train)
   
-  # calcoliamo l’errore per i due modelli
+  # errore per i due modelli
   data_train.lm.p = predict(data_train.lm, data_test)
   ldata_train.lm.p = predict(ldata_train.lm, ldata_test)
   
-  # salviamo lo scarto quadratico medio per entrambi i modelli
+  # scarto quadratico medio per entrambi i modelli
   err_lin[i] = sqrt(mean((data_train.lm.p - data_test$W)^2))
   err_log[i] = sqrt(mean((exp(ldata_train.lm.p) - data_test$W)^2))
 }
