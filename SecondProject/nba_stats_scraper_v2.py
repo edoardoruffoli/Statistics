@@ -62,14 +62,13 @@ def get_data(season_list):
             # 1 for teams that qualified for the playoff, 0 otherwise
             l['PLAYOFF'] = 1 if playoff_rank <= 8 else 0
 
-        # Merge the two lists of dicts (Traditional Info and Advanced Info)
+        # Merge the three lists of dicts (Traditional Info, Advanced Info and PlayoffInfo)
         d = defaultdict(dict)
         for l in (allTeamsTraditionalList, allTeamsAdvancedList, allTeamsLeagueStandingsList):
             for elem in l:
                 d[elem['TEAM_ID']].update(elem)
 
         result = d.values()
-        print("CACCA")
         # Add the merged dict to the DataFrame
         df = pd.DataFrame(result)
 
