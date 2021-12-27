@@ -1,4 +1,4 @@
-data = read.csv("LTOTALNSA.csv", header = TRUE, sep = ",", stringsAsFactors = F)
+data = read.csv("tabella.csv", header = TRUE, sep = ",", stringsAsFactors = F)
 colnames(data) <- c("Data", "Vendite")
 head(data)
 summary(data)
