@@ -1,4 +1,6 @@
 # Statistics
+Statistics projects realized using R and Python as part of the Statistica II exam. 
+Each project contains a report (written in italian), a .csv file containing the data on which the analysis was carried out and the source files used for the analysis.
 
 ## Project 1: Predicting NBA Teams Wins using Linear Regression Analysis
 
